@@ -3,100 +3,104 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ray marching · Minimalista</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Ray marching</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#0a1424;
-    --ink-2:#0f1d33;
-    --panel:#13243d;
-    --line:#284a73;
-    --line-soft:#1c3656;
-    --cyan:#52d1ff;      /* el raig / pas segur */
-    --cyan-dim:#2c84a8;
-    --rose:#ff7a9c;       /* objecte A */
-    --blue:#90a6c4;       /* objecte B */
-    --gold:#f4b942;      /* impacte */
-    --text:#e9eef7;
-    --muted:#90a6c4;
-    --muted-2:#6b83a3;
-    --mono:'JetBrains Mono',ui-monospace,monospace;
-    --ui:'Space Grotesk',system-ui,sans-serif;
+    --bg:#ffffff;
+    --text:#37352f;
+    --text-muted:#787774;
+    --line:#e5e5e5;
+    --hover:#efefef;
+    --blue:#2383e2;
+    --blue-bg:#e8f0fe;
+    --red:#e03e3e;
+    --green:#0f7b6c;
+    --orange:#d9730d;
+    --gray:#ebeced;
+    --ui: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
   body{
-    font-family:var(--ui);color:var(--text);
-    background:
-      radial-gradient(1200px 700px at 80% -10%, #16385f33, transparent 60%),
-      radial-gradient(900px 600px at -10% 110%, #1d2c5333, transparent 55%),
-      var(--ink);
-    -webkit-font-smoothing:antialiased;display:flex;justify-content:center;align-items:center;padding:18px;
+    font-family:var(--ui);color:var(--text);background:var(--bg);
+    -webkit-font-smoothing:antialiased;display:flex;justify-content:center;align-items:center;padding:24px;
   }
   .wrap{
-    width:100%;max-width:960px;border:1px solid var(--line-soft);border-radius:16px;
-    background:linear-gradient(180deg,var(--ink-2),var(--ink));
-    box-shadow:0 30px 80px -30px #000a, inset 0 1px 0 #ffffff0a;overflow:hidden;
-    display:flex;flex-direction:column;
+    width:100%;max-width:960px;border:1px solid var(--line);border-radius:4px;
+    display:flex;flex-direction:column;overflow:hidden;
   }
-  .body{display:grid;grid-template-columns:1fr 320px;gap:0;}
+  .header {
+    padding: 14px 20px; border-bottom: 1px solid var(--line);
+    display:flex; align-items:center; gap: 8px;
+  }
+  .header h1 { font-size:16px; font-weight:600; margin:0;}
+  .header .tag { font-size:12px; color:var(--text-muted); background:var(--gray); padding:2px 6px; border-radius:3px; }
+  
+  .body{display:grid;grid-template-columns:1fr 280px;gap:0;}
   @media(max-width:780px){.body{grid-template-columns:1fr;}}
 
-  .stage{position:relative;background:radial-gradient(120% 120% at 50% 0%,#0e1d31,#091525);
-    aspect-ratio:4/3;touch-action:none;cursor:crosshair;}
-  @media(min-width:781px){.stage{border-right:1px solid var(--line-soft);}}
-  @media(max-width:780px){.stage{border-bottom:1px solid var(--line-soft);}}
+  .stage{position:relative;background:#f7f7f5;aspect-ratio:4/3;touch-action:none;cursor:crosshair;}
+  @media(min-width:781px){.stage{border-right:1px solid var(--line);}}
+  @media(max-width:780px){.stage{border-bottom:1px solid var(--line);}}
   canvas{display:block;width:100%;height:100%}
+  
   .legend{position:absolute;left:14px;top:14px;display:flex;flex-direction:column;gap:5px;
-    font-family:var(--mono);font-size:11px;background:#0a1424cc;border:1px solid var(--line-soft);
-    border-radius:8px;padding:8px 10px;pointer-events:none;backdrop-filter:blur(4px);}
+    font-family:var(--ui);font-size:12px;color:var(--text);background:#ffffffdd;border:1px solid var(--line);
+    border-radius:4px;padding:8px 10px;pointer-events:none;backdrop-filter:blur(4px);}
   .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-  .hint{position:absolute;right:14px;bottom:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted-2);
-    background:#0a1424cc;padding:4px 8px;border-radius:6px;pointer-events:none;backdrop-filter:blur(4px);}
+  .hint{position:absolute;right:14px;bottom:14px;font-family:var(--ui);font-size:12px;color:var(--text-muted);
+    background:#ffffffdd;border:1px solid var(--line);padding:4px 8px;border-radius:4px;pointer-events:none;}
 
-  .side{display:flex;flex-direction:column;gap:20px;padding:24px;background:#0d1a2c;}
+  .side{display:flex;flex-direction:column;gap:24px;padding:20px;background:#ffffff;}
+  
   .controls{display:flex;flex-direction:column;gap:16px}
   .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  .btn{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--text);
-    font-family:var(--ui);font-weight:600;font-size:13px;padding:10px 14px;border-radius:9px;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s;}
-  .btn:hover{border-color:var(--cyan-dim);color:var(--cyan)}
-  .btn.primary{grid-column:1/-1;background:#102b40;border-color:var(--cyan-dim);color:var(--cyan)}
-  .btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .btn{appearance:none;border:1px solid var(--line);background:#ffffff;color:var(--text);
+    font-family:var(--ui);font-weight:500;font-size:13px;padding:8px 12px;border-radius:4px;cursor:pointer;
+    transition:0.1s;}
+  .btn:hover{background:var(--hover);}
+  .btn.primary{grid-column:1/-1;background:var(--blue);border-color:var(--blue);color:#fff;}
+  .btn.primary:hover{background:#1a73e8;}
+  
   .ctl{display:flex;flex-direction:column;gap:8px}
-  .ctl label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-weight:600;}
-  .ctl label .val{font-family:var(--mono);color:var(--cyan)}
-  input[type=range]{-webkit-appearance:none;appearance:none;height:5px;border-radius:6px;
-    background:linear-gradient(90deg,var(--cyan-dim),var(--line));outline:none;}
-  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;
-    background:var(--cyan);border:2px solid var(--ink);cursor:pointer;}
-  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--cyan);border:2px solid var(--ink);cursor:pointer;}
-  .toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none;font-weight:500;}
-  .toggle input{width:16px;height:16px;accent-color:var(--cyan)}
+  .ctl label{display:flex;justify-content:space-between;font-size:13px;color:var(--text-muted);font-weight:500;}
+  .ctl label .val{font-family:var(--mono);color:var(--text);}
+  
+  input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;
+    background:var(--line);outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+    background:#ffffff;border:1px solid #c1c1c1;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,0.1);}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#ffffff;border:1px solid #c1c1c1;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,0.1);}
+  
+  .toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);cursor:pointer;user-select:none;}
+  .toggle input{width:16px;height:16px;accent-color:var(--blue);}
 
-  .readout{border:1px solid var(--line-soft);border-radius:12px;background:var(--panel);font-family:var(--mono);font-size:12.5px;overflow:hidden;margin-top:auto;}
-  .readout .row{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line-soft);}
+  .readout{border:1px solid var(--line);border-radius:4px;background:#ffffff;font-size:13px;margin-top:auto;}
+  .readout .row{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);}
   .readout .row:last-child{border-bottom:none}
-  .readout .k{color:var(--muted-2)} .readout .v{color:var(--text);font-weight:500;text-align:right}
-  .badge{font-weight:700;padding:2px 8px;border-radius:5px;font-size:11px}
-  .badge.march{color:var(--cyan);background:#102b40}
-  .badge.hit{color:var(--ink);background:var(--gold)}
-  .badge.miss{color:var(--rose);background:#3d1a24}
-  @media (prefers-reduced-motion: reduce){*{animation:none!important}}
+  .readout .k{color:var(--text-muted)} .readout .v{color:var(--text);font-family:var(--mono);text-align:right}
+  .badge{font-weight:500;padding:2px 6px;border-radius:3px;font-size:12px;font-family:var(--ui);}
+  .badge.march{color:var(--blue);background:var(--blue-bg)}
+  .badge.hit{color:#fff;background:var(--orange)}
+  .badge.miss{color:#fff;background:var(--red)}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <div class="header">
+    <h1>Ray marching</h1>
+    <span class="tag">Visualització interactiva</span>
+  </div>
   <div class="body">
     <div class="stage">
       <canvas id="cv"></canvas>
       <div class="legend">
-        <div><i style="background:var(--cyan)"></i>raig + cercle segur</div>
-        <div><i style="background:var(--rose)"></i>Objecte A (cercle)</div>
-        <div><i style="background:var(--blue)"></i>Objecte B (caixa)</div>
-        <div><i style="background:var(--gold)"></i>impacte + normal</div>
+        <div><i style="background:var(--blue)"></i>Raig + cercle segur</div>
+        <div><i style="background:var(--red)"></i>Objecte A (cercle)</div>
+        <div><i style="background:var(--text-muted)"></i>Objecte B (caixa)</div>
+        <div><i style="background:var(--orange)"></i>Impacte + normal</div>
       </div>
       <div class="hint">Arrossega per moure</div>
     </div>
@@ -104,20 +108,20 @@
     <div class="side">
       <div class="controls">
         <div class="btns">
-          <button class="btn primary" id="play">▶ Reproduir</button>
-          <button class="btn" id="step">⏭ Pas</button>
-          <button class="btn" id="reset">↺ Reinicia</button>
+          <button class="btn primary" id="play">Reproduir</button>
+          <button class="btn" id="step">Pas següent</button>
+          <button class="btn" id="reset">Reiniciar</button>
         </div>
-        <div class="ctl"><label>llindar d'impacte ε <span class="val" id="leps">3 px</span></label>
+        <div class="ctl"><label>Llindar d'impacte ε <span class="val" id="leps">3 px</span></label>
           <input type="range" id="eps" min="1" max="14" step="0.5" value="3"></div>
-        <label class="toggle"><input type="checkbox" id="field" checked> camp de distàncies</label>
+        <label class="toggle"><input type="checkbox" id="field" checked> Mostrar camp de distàncies (SDF)</label>
       </div>
 
       <div class="readout">
-        <div class="row"><span class="k">estat</span><span class="v"><span class="badge march" id="state">MARXANT</span></span></div>
-        <div class="row"><span class="k">pas</span><span class="v" id="rstep">0 / 0</span></div>
-        <div class="row"><span class="k">distància</span><span class="v" id="rdist">— px</span></div>
-        <div class="row"><span class="k">objecte</span><span class="v" id="robj">—</span></div>
+        <div class="row"><span class="k">Estat</span><span class="v"><span class="badge march" id="state">MARXANT</span></span></div>
+        <div class="row"><span class="k">Pas</span><span class="v" id="rstep">0 / 0</span></div>
+        <div class="row"><span class="k">Distància</span><span class="v" id="rdist">— px</span></div>
+        <div class="row"><span class="k">Objecte</span><span class="v" id="robj">—</span></div>
       </div>
     </div>
   </div>
@@ -125,9 +129,9 @@
 
 <script>
 const C = {
-  ink:'#0a1424', grid:'#1c3656', cyan:'#52d1ff', cyanSoft:'#52d1ff33',
-  rose:'#ff7a9c', blue:'#90a6c4', gold:'#f4b942', text:'#e9eef7',
-  muted:'#90a6c4', mut2:'#6b83a3'
+  ink:'#ffffff', grid:'#e5e5e5', blue:'#2383e2', blueSoft:'#2383e233',
+  red:'#e03e3e', objB:'#9b9a97', orange:'#d9730d', text:'#37352f',
+  muted:'#787774', bg: '#f7f7f5'
 };
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 let W=0,H=0,S=0,dpr=1;
@@ -190,15 +194,17 @@ function renderField(){
       const {d,obj}=scene(x,y);
       let r,g,b;
       if(d<0){
-        if(obj==='A'){ r=58; g=14; b=30; } else { r=20; g=30; b=58; }
-        const k=Math.min(1,-d/60); r+=k*22; g+=k*8; b+=k*14;
+        if(obj==='A'){ r=254; g=236; b=236; } else { r=241; g=241; b=239; }
+        const k=Math.min(1,-d/60); r-=k*20; g-=k*20; b-=k*20;
       } else {
         const f=d/BW, band=f-Math.floor(f);
         const fade=Math.max(0,1-d/maxD);
-        let v=0.045+0.055*fade;
-        if(band<0.07||band>0.93) v+=0.085;
-        r=14+v*60; g=26+v*90; b=36+v*110;
-        r=Math.min(50,r); g=Math.min(80,g); b=Math.min(100,b);
+        let v=1;
+        if(band<0.07||band>0.93) v=0.94;
+        r=247*v; g=247*v; b=245*v;
+        r=Math.max(230, r - (1-fade)*20);
+        g=Math.max(230, g - (1-fade)*20);
+        b=Math.max(230, b - (1-fade)*20);
       }
       const o=(j*fw+i)*4;
       data[o]=r; data[o+1]=g; data[o+2]=b; data[o+3]=255;
@@ -237,58 +243,59 @@ function draw(ts){
     ctx.globalAlpha=1;
     ctx.drawImage(fieldCanvas,0,0,W,H);
   } else {
+    ctx.fillStyle=C.bg; ctx.fillRect(0,0,W,H);
     ctx.strokeStyle=C.grid;ctx.lineWidth=1;
     for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
     for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
   }
 
-  ctx.lineWidth=2.2;
-  ctx.strokeStyle=C.rose;ctx.beginPath();ctx.arc(A.x*W,A.y*H,A.r*S,0,7);ctx.stroke();
-  ctx.strokeStyle=C.blue;
+  ctx.lineWidth=2;
+  ctx.strokeStyle=C.red;ctx.beginPath();ctx.arc(A.x*W,A.y*H,A.r*S,0,7);ctx.stroke();
+  ctx.strokeStyle=C.objB;
   const bx=B.w*S,by=B.h*S,cr=B.cr*S;
   ctx.beginPath();
   if(ctx.roundRect) ctx.roundRect(B.x*W-bx,B.y*H-by,2*bx,2*by,cr);
   else ctx.rect(B.x*W-bx,B.y*H-by,2*bx,2*by);
   ctx.stroke();
 
-  ctx.font='600 11px JetBrains Mono, monospace';
-  ctx.fillStyle=C.rose;ctx.fillText('A',A.x*W-A.r*S,A.y*H-A.r*S-6);
-  ctx.fillStyle=C.blue;ctx.fillText('B',B.x*W-bx,B.y*H-by-6);
+  ctx.font='600 12px Inter, sans-serif';
+  ctx.fillStyle=C.red;ctx.fillText('A',A.x*W-A.r*S,A.y*H-A.r*S-6);
+  ctx.fillStyle=C.objB;ctx.fillText('B',B.x*W-bx,B.y*H-by-6);
 
   const O=px(cam);
   const shown=Math.min(revealCount, march.length);
 
   for(let i=0;i<shown;i++){
     const s=march[i];
-    const col=s.obj==='A'?C.rose:C.blue;
-    ctx.strokeStyle=C.cyanSoft;ctx.lineWidth=1.4;
+    const col=s.obj==='A'?C.red:C.objB;
+    ctx.strokeStyle=C.blueSoft;ctx.lineWidth=1.4;
     ctx.beginPath();ctx.arc(s.x,s.y,Math.max(s.d,0),0,7);ctx.stroke();
     ctx.fillStyle=col;ctx.beginPath();ctx.arc(s.x,s.y,2.2,0,7);ctx.fill();
     if(i<shown-1){
       const nx=march[i+1];
-      ctx.strokeStyle=C.cyan;ctx.lineWidth=2.2;
+      ctx.strokeStyle=C.blue;ctx.lineWidth=2.2;
       ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(nx.x,nx.y);ctx.stroke();
     }
   }
 
   const cur=march[shown-1];
   if(cur){
-    ctx.strokeStyle=C.cyan;ctx.lineWidth=2;
+    ctx.strokeStyle=C.blue;ctx.lineWidth=2;
     ctx.globalAlpha=.9;ctx.beginPath();ctx.arc(cur.x,cur.y,Math.max(cur.d,0),0,7);ctx.stroke();ctx.globalAlpha=1;
-    ctx.fillStyle=C.cyan;ctx.beginPath();ctx.arc(cur.x,cur.y,4,0,7);ctx.fill();
+    ctx.fillStyle=C.blue;ctx.beginPath();ctx.arc(cur.x,cur.y,4,0,7);ctx.fill();
   }
 
   const hitShown = hitInfo && shown>=march.length;
   if(hitShown){
     const pulse=0.5+0.5*Math.sin((ts||0)/200);
-    ctx.strokeStyle=C.gold;ctx.globalAlpha=.5+.5*pulse;ctx.lineWidth=2.5;
+    ctx.strokeStyle=C.orange;ctx.globalAlpha=.5+.5*pulse;ctx.lineWidth=2;
     ctx.beginPath();ctx.arc(hitInfo.x,hitInfo.y,7+pulse*5,0,7);ctx.stroke();ctx.globalAlpha=1;
-    ctx.fillStyle=C.gold;ctx.beginPath();ctx.arc(hitInfo.x,hitInfo.y,4.5,0,7);ctx.fill();
-    arrow(hitInfo.x,hitInfo.y,hitInfo.n[0],hitInfo.n[1],26,C.gold);
+    ctx.fillStyle=C.orange;ctx.beginPath();ctx.arc(hitInfo.x,hitInfo.y,4.5,0,7);ctx.fill();
+    arrow(hitInfo.x,hitInfo.y,hitInfo.n[0],hitInfo.n[1],26,C.orange);
   }
 
   const dir=[Math.cos(ang),Math.sin(ang)];
-  ctx.fillStyle=C.cyan;
+  ctx.fillStyle=C.blue;
   ctx.beginPath();ctx.moveTo(O.x+dir[0]*11,O.y+dir[1]*11);
   ctx.lineTo(O.x-dir[1]*8,O.y+dir[0]*8);
   ctx.lineTo(O.x+dir[1]*8,O.y-dir[0]*8);
