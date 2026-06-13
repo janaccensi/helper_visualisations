@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coordenades polars i esfèriques · potències</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Spectral:ital,wght@1,400;1,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a1424;
+    --ink-2:#0f1d33;
+    --panel:#13243d;
+    --panel-2:#193150;
+    --line:#284a73;
+    --line-soft:#1c3656;
+    --gold:#f4b942;
+    --gold-dim:#bd8c2a;
+    --cyan:#52d1ff;
+    --cyan-dim:#2c84a8;
+    --rose:#ff7a9c;
+    --text:#e9eef7;
+    --muted:#90a6c4;
+    --muted-2:#6b83a3;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --ui:'Space Grotesk',system-ui,sans-serif;
+    --disp:'Spectral',Georgia,serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--ui);
+    color:var(--text);
+    background:
+      radial-gradient(1200px 700px at 80% -10%, #16385f33, transparent 60%),
+      radial-gradient(900px 600px at -10% 110%, #1d2c5333, transparent 55%),
+      var(--ink);
+    -webkit-font-smoothing:antialiased;
+    display:flex;justify-content:center;
+    padding:18px;
+  }
+  .wrap{
+    width:100%;max-width:1040px;
+    border:1px solid var(--line-soft);
+    border-radius:16px;
+    background:linear-gradient(180deg,var(--ink-2),var(--ink));
+    box-shadow:0 30px 80px -30px #000a, inset 0 1px 0 #ffffff0a;
+    overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  header{
+    padding:22px 26px 16px;
+    border-bottom:1px solid var(--line-soft);
+    background:linear-gradient(180deg,#14263f,#102035);
+    position:relative;
+  }
+  header::after{
+    content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
+    background:linear-gradient(90deg,transparent,var(--gold),var(--cyan),transparent);
+    opacity:.5;
+  }
+  .eyebrow{
+    font-size:11px;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--muted-2);font-weight:600;
+  }
+  h1{
+    font-family:var(--disp);font-style:italic;font-weight:500;
+    font-size:clamp(22px,3.4vw,32px);line-height:1.1;margin-top:4px;
+    color:var(--text);
+  }
+  h1 b{color:var(--gold);font-weight:500}
+  h1 i{color:var(--cyan);font-style:italic}
+  .tabs{
+    display:flex;flex-wrap:wrap;gap:4px;padding:10px 14px 0;
+    border-bottom:1px solid var(--line-soft);
+    background:#0d1a2c;
+  }
+  .tab{
+    appearance:none;border:1px solid transparent;border-bottom:none;
+    background:none;color:var(--muted);
+    font-family:var(--ui);font-size:13px;font-weight:600;
+    padding:11px 15px;border-radius:9px 9px 0 0;cursor:pointer;
+    display:flex;align-items:center;gap:8px;transition:.18s;
+  }
+  .tab .num{
+    font-family:var(--mono);font-size:11px;color:var(--muted-2);
+    border:1px solid var(--line);border-radius:5px;padding:1px 5px;
+  }
+  .tab:hover{color:var(--text)}
+  .tab[aria-selected="true"]{
+    color:var(--text);background:var(--panel);
+    border-color:var(--line-soft);
+  }
+  .tab[aria-selected="true"] .num{color:var(--gold);border-color:var(--gold-dim)}
+  .tab:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+  .panel{display:none;padding:20px}
+  .panel.active{display:grid;gap:18px;grid-template-columns:1.15fr .85fr}
+  @media(max-width:760px){.panel.active{grid-template-columns:1fr}}
+
+  .stage{
+    position:relative;border:1px solid var(--line-soft);border-radius:12px;
+    background:radial-gradient(120% 120% at 50% 0%,#0e1d31,#091525);
+    overflow:hidden;aspect-ratio:1/1;min-height:280px;
+    touch-action:none;
+  }
+  canvas{display:block;width:100%;height:100%}
+  .hint{
+    position:absolute;left:10px;bottom:9px;font-family:var(--mono);
+    font-size:10.5px;color:var(--muted-2);letter-spacing:.02em;
+    background:#0a162699;padding:3px 7px;border-radius:6px;pointer-events:none;
+  }
+  .side{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .lead{font-size:13.5px;line-height:1.55;color:var(--muted)}
+  .lead b{color:var(--text);font-weight:600}
+  .lead .g{color:var(--gold)}
+  .lead .c{color:var(--cyan)}
+
+  .readout{
+    border:1px solid var(--line-soft);border-radius:10px;background:#0c1a2c;
+    font-family:var(--mono);font-size:12.5px;overflow:hidden;
+  }
+  .readout .row{
+    display:flex;justify-content:space-between;gap:10px;
+    padding:8px 12px;border-bottom:1px solid var(--line-soft);
+  }
+  .readout .row:last-child{border-bottom:none}
+  .readout .k{color:var(--muted-2)}
+  .readout .v{color:var(--text);font-weight:500;text-align:right}
+  .readout .v.gold{color:var(--gold)}
+  .readout .v.cyan{color:var(--cyan)}
+
+  .controls{display:flex;flex-direction:column;gap:13px}
+  .ctl{display:flex;flex-direction:column;gap:6px}
+  .ctl label{
+    display:flex;justify-content:space-between;font-size:12px;color:var(--muted);
+    font-weight:600;letter-spacing:.02em;
+  }
+  .ctl label .val{font-family:var(--mono);color:var(--gold)}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;height:5px;border-radius:6px;
+    background:linear-gradient(90deg,var(--cyan-dim),var(--line));outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:17px;height:17px;border-radius:50%;
+    background:var(--gold);border:2px solid #0a1424;cursor:pointer;
+    box-shadow:0 0 0 1px var(--gold-dim);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:17px;height:17px;border-radius:50%;background:var(--gold);
+    border:2px solid #0a1424;cursor:pointer;
+  }
+  input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(--cyan)}
+
+  .formula{
+    font-family:var(--mono);font-size:13px;color:var(--cyan);
+    background:#0b1828;border:1px solid var(--line-soft);border-radius:9px;
+    padding:11px 13px;line-height:1.7;letter-spacing:.01em;
+  }
+  .formula .op{color:var(--gold)}
+  .formula .mut{color:var(--muted-2)}
+  .note{font-size:12px;line-height:1.5;color:var(--muted-2)}
+  .note b{color:var(--muted)}
+
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Geometria · nombres complexos · De Moivre</div>
+    <h1>De les <b>coordenades polars</b> a les <i>esfèriques</i>, i què vol dir elevar a la potència&nbsp;<i>n</i></h1>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true"  data-tab="t1"><span class="num">01</span> Polars (2D)</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="t2"><span class="num">02</span> Esfèriques (3D)</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="t3"><span class="num">03</span> Potència en polars</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="t4"><span class="num">04</span> Potència en esfèriques</button>
+  </div>
+
+  <!-- ===== TAB 1 : POLARS ===== -->
+  <section class="panel active" id="t1" role="tabpanel">
+    <div class="stage"><canvas id="c1"></canvas><div class="hint">Arrossega el punt</div></div>
+    <div class="side">
+      <p class="lead">Un punt del pla es pot situar amb dos números: la <b class="g">distància <i>r</i></b> a l'origen i l'<b class="c">angle θ</b> respecte de l'eix horitzontal. Això són les <b>coordenades polars</b> <span class="g">(r, θ)</span>.</p>
+      <div class="formula">
+        x <span class="op">=</span> r·cos θ <span class="mut">— horitzontal</span><br>
+        y <span class="op">=</span> r·sin θ <span class="mut">— vertical</span>
+      </div>
+      <div class="readout">
+        <div class="row"><span class="k">r &nbsp;(radi)</span><span class="v gold" id="r1">—</span></div>
+        <div class="row"><span class="k">θ &nbsp;(angle)</span><span class="v cyan" id="th1">—</span></div>
+        <div class="row"><span class="k">x = r·cos θ</span><span class="v" id="x1">—</span></div>
+        <div class="row"><span class="k">y = r·sin θ</span><span class="v" id="y1">—</span></div>
+      </div>
+      <p class="note"><b>Idea clau:</b> cartesianes i polars descriuen el mateix punt; només canvia <i>com</i> el referenciem — per fletxes (x, y) o per radi i gir (r, θ).</p>
+    </div>
+  </section>
+
+  <!-- ===== TAB 2 : ESFÈRIQUES ===== -->
+  <section class="panel" id="t2" role="tabpanel">
+    <div class="stage"><canvas id="c2"></canvas><div class="hint">Arrossega per orbitar la vista</div></div>
+    <div class="side">
+      <p class="lead">En 3D necessitem un radi i <b>dos</b> angles. Les <b>coordenades esfèriques</b> <span class="g">(r, θ, φ)</span> usen la <b class="g">distància <i>r</i></b>, l'<b class="c">angle polar θ</b> (des de l'eix vertical z) i l'<b style="color:var(--rose)">azimut φ</b> (el gir al pla horitzontal).</p>
+      <div class="formula">
+        x <span class="op">=</span> r·sin θ·cos φ<br>
+        y <span class="op">=</span> r·sin θ·sin φ<br>
+        z <span class="op">=</span> r·cos θ
+      </div>
+      <div class="controls">
+        <div class="ctl"><label>radi <i>r</i> <span class="val" id="lr2">1.00</span></label><input type="range" id="sr2" min="0.2" max="1.6" step="0.01" value="1"></div>
+        <div class="ctl"><label>polar θ <span class="val" id="lt2">55°</span></label><input type="range" id="st2" min="0" max="180" step="1" value="55"></div>
+        <div class="ctl"><label>azimut φ <span class="val" id="lf2">40°</span></label><input type="range" id="sf2" min="0" max="360" step="1" value="40"></div>
+      </div>
+      <p class="note"><b>Fixa't:</b> si poses θ = 90° el punt cau just al pla horitzontal i recuperes unes coordenades polars normals. Les polars són el «tall pla» de les esfèriques.</p>
+    </div>
+  </section>
+
+  <!-- ===== TAB 3 : POTÈNCIA POLARS ===== -->
+  <section class="panel" id="t3" role="tabpanel">
+    <div class="stage"><canvas id="c3"></canvas><div class="hint">Arrossega z · mou el control n</div></div>
+    <div class="side">
+      <p class="lead">Un nombre complex és <b>z = r·e<sup>iθ</sup></b>. Elevar-lo a <b>n</b> segueix el <b>teorema de De Moivre</b>: el radi s'eleva i l'angle es <b>multiplica</b>.</p>
+      <div class="formula">
+        z<sup>n</sup> <span class="op">=</span> (r·e<sup>iθ</sup>)<sup>n</sup> <span class="op">=</span> r<span class="op">ⁿ</span> · e<sup>i·<span class="op">n</span>θ</sup><br>
+        <span class="mut">radi → rⁿ &nbsp;·&nbsp; angle → n·θ</span>
+      </div>
+      <div class="controls">
+        <div class="ctl"><label>exponent <i>n</i> <span class="val" id="ln3">3.0</span></label><input type="range" id="sn3" min="1" max="6" step="0.05" value="3"></div>
+      </div>
+      <div class="readout">
+        <div class="row"><span class="k">z &nbsp;= (r, θ)</span><span class="v gold" id="z3">—</span></div>
+        <div class="row"><span class="k">zⁿ = (rⁿ, nθ)</span><span class="v cyan" id="zn3">—</span></div>
+      </div>
+      <p class="note"><b>El traç</b> uneix z, z², z³… : és una <i>espiral</i>. Si r&gt;1 s'allunya, si r&lt;1 s'acosta a l'origen, i si r=1 gira sobre el cercle unitat.</p>
+    </div>
+  </section>
+
+  <!-- ===== TAB 4 : POTÈNCIA ESFÈRIQUES ===== -->
+  <section class="panel" id="t4" role="tabpanel">
+    <div class="stage"><canvas id="c4"></canvas><div class="hint">Arrossega per orbitar · mou els controls</div></div>
+    <div class="side">
+      <p class="lead">La mateixa idea, una dimensió més amunt: elevem el radi i multipliquem <b>tots dos</b> angles. És la fórmula que defineix el <b>Mandelbulb</b> (el «germà» 3D del conjunt de Mandelbrot).</p>
+      <div class="formula">
+        (r, θ, φ)<span class="op">ⁿ</span> <span class="op">=</span> ( r<span class="op">ⁿ</span>, <span class="op">n</span>·θ, <span class="op">n</span>·φ )<br>
+        <span class="mut">→ després es torna a (x, y, z)</span>
+      </div>
+      <div class="controls">
+        <div class="ctl"><label>radi <i>r</i> <span class="val" id="lr4">1.00</span></label><input type="range" id="sr4" min="0.4" max="1.25" step="0.01" value="1"></div>
+        <div class="ctl"><label>polar θ <span class="val" id="lt4">50°</span></label><input type="range" id="st4" min="0" max="180" step="1" value="50"></div>
+        <div class="ctl"><label>azimut φ <span class="val" id="lf4">35°</span></label><input type="range" id="sf4" min="0" max="360" step="1" value="35"></div>
+        <div class="ctl"><label>exponent <i>n</i> <span class="val" id="ln4">3.0</span></label><input type="range" id="sn4" min="1" max="5" step="0.05" value="3"></div>
+      </div>
+      <p class="note"><b>Paral·lelisme:</b> en 2D multipliquem 1 angle (De Moivre); en 3D en multipliquem 2. Repetir aquesta operació sobre milions de punts és el que dibuixa la superfície del Mandelbulb.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const P = {
+  gold:'#f4b942', cyan:'#52d1ff', rose:'#ff7a9c',
+  line:'#284a73', lineSoft:'#1c3656', text:'#e9eef7',
+  muted:'#90a6c4', mut2:'#6b83a3', ink:'#0a1424'
+};
+
+/* ---------- canvas helper ---------- */
+function setup(canvas){
+  const ctx = canvas.getContext('2d');
+  function resize(){
+    const dpr = Math.min(window.devicePixelRatio||1, 2);
+    const r = canvas.getBoundingClientRect();
+    canvas.width = Math.max(1,Math.round(r.width*dpr));
+    canvas.height= Math.max(1,Math.round(r.height*dpr));
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  return {ctx, resize, W:()=>canvas.clientWidth, H:()=>canvas.clientHeight};
+}
+const fmt = (x,d=2)=> (Math.abs(x)<1e-9?0:x).toFixed(d);
+const deg = r => r*180/Math.PI, rad = d => d*Math.PI/180;
+
+/* ============================================================
+   TAB 1 — POLARS 2D
+============================================================ */
+(function(){
+  const cv=document.getElementById('c1'); const s=setup(cv);
+  let pt={x:0.62,y:0.45}; // normalized world (-1..1 visible-ish)
+  let dragging=false;
+  const o = ()=>({cx:s.W()/2, cy:s.H()/2, R:Math.min(s.W(),s.H())*0.40});
+
+  function worldToScreen(wx,wy){const {cx,cy,R}=o();return [cx+wx*R, cy-wy*R];}
+  function screenToWorld(sx,sy){const {cx,cy,R}=o();return [(sx-cx)/R, -(sy-cy)/R];}
+
+  function draw(){
+    s.resize(); const ctx=s.ctx; const {cx,cy,R}=o();
+    ctx.clearRect(0,0,s.W(),s.H());
+    // polar grid: rings
+    ctx.lineWidth=1;
+    for(let i=1;i<=4;i++){
+      ctx.beginPath(); ctx.strokeStyle = i===4?P.line:P.lineSoft;
+      ctx.arc(cx,cy,R*i/4,0,7); ctx.stroke();
+    }
+    // radial spokes
+    for(let a=0;a<360;a+=30){
+      const rr=rad(a); ctx.beginPath(); ctx.strokeStyle=P.lineSoft;
+      ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(rr)*R,cy-Math.sin(rr)*R); ctx.stroke();
+    }
+    // axes
+    ctx.strokeStyle=P.line; ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.moveTo(cx-R-12,cy);ctx.lineTo(cx+R+12,cy);
+    ctx.moveTo(cx,cy-R-12);ctx.lineTo(cx,cy+R+12);ctx.stroke();
+
+    const [px,py]=worldToScreen(pt.x,pt.y);
+    const r=Math.hypot(pt.x,pt.y); let th=Math.atan2(pt.y,pt.x); if(th<0)th+=2*Math.PI;
+
+    // x & y projection legs
+    ctx.lineWidth=1.5; ctx.setLineDash([4,4]);
+    ctx.strokeStyle=P.mut2;
+    ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px,cy);ctx.stroke();      // to x-axis
+    ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(cx,py);ctx.stroke();      // to y-axis
+    ctx.setLineDash([]);
+
+    // angle arc
+    ctx.strokeStyle=P.cyan;ctx.lineWidth=2.4;
+    ctx.beginPath();ctx.arc(cx,cy,30,0,-th,true);ctx.stroke();
+
+    // radius vector
+    ctx.strokeStyle=P.gold;ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(px,py);ctx.stroke();
+    // arrow head
+    const ang=Math.atan2(py-cy,px-cx);
+    ctx.fillStyle=P.gold;ctx.beginPath();
+    ctx.moveTo(px,py);
+    ctx.lineTo(px-12*Math.cos(ang-0.4),py-12*Math.sin(ang-0.4));
+    ctx.lineTo(px-12*Math.cos(ang+0.4),py-12*Math.sin(ang+0.4));
+    ctx.closePath();ctx.fill();
+
+    // point
+    ctx.fillStyle=P.gold;ctx.beginPath();ctx.arc(px,py,7,0,7);ctx.fill();
+    ctx.strokeStyle=P.ink;ctx.lineWidth=2;ctx.stroke();
+
+    // labels
+    ctx.font='600 13px JetBrains Mono, monospace';
+    ctx.fillStyle=P.cyan;ctx.fillText('θ', cx+38, cy-8);
+    ctx.fillStyle=P.gold;ctx.fillText('r', (cx+px)/2+8, (cy+py)/2-6);
+
+    document.getElementById('r1').textContent=fmt(r);
+    document.getElementById('th1').textContent=fmt(deg(th),1)+'°';
+    document.getElementById('x1').textContent=fmt(pt.x);
+    document.getElementById('y1').textContent=fmt(pt.y);
+  }
+
+  function pos(e){const r=cv.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return[t.clientX-r.left,t.clientY-r.top];}
+  cv.addEventListener('pointerdown',e=>{const[mx,my]=pos(e);const[wx,wy]=screenToWorld(mx,my);if(Math.hypot(wx-pt.x,wy-pt.y)<0.18||true){dragging=true;pt.x=Math.max(-1.05,Math.min(1.05,wx));pt.y=Math.max(-1.05,Math.min(1.05,wy));draw();}cv.setPointerCapture(e.pointerId);});
+  cv.addEventListener('pointermove',e=>{if(!dragging)return;const[mx,my]=pos(e);const[wx,wy]=screenToWorld(mx,my);pt.x=Math.max(-1.05,Math.min(1.05,wx));pt.y=Math.max(-1.05,Math.min(1.05,wy));draw();});
+  window.addEventListener('pointerup',()=>dragging=false);
+  window.addEventListener('resize',draw);
+  cv._draw=draw; draw();
+})();
+
+/* ============================================================
+   3D shared projection
+============================================================ */
+function makeCamera(){
+  return {yaw: -0.7, pitch: 0.45};
+}
+function project(p, cam, cx, cy, scale){
+  // rotate around z (yaw)
+  let x = p[0]*Math.cos(cam.yaw) - p[1]*Math.sin(cam.yaw);
+  let y = p[0]*Math.sin(cam.yaw) + p[1]*Math.cos(cam.yaw);
+  let z = p[2];
+  // rotate around x (pitch)
+  let y2 = y*Math.cos(cam.pitch) - z*Math.sin(cam.pitch);
+  let z2 = y*Math.sin(cam.pitch) + z*Math.cos(cam.pitch);
+  // weak perspective; y2 = depth
+  const f = 4.2;
+  const persp = f/(f + y2*0.55);
+  return [cx + x*scale*persp, cy - z2*scale*persp, y2];
+}
+function sph2cart(r,th,ph){ // th polar from z, ph azimuth
+  return [r*Math.sin(th)*Math.cos(ph), r*Math.sin(th)*Math.sin(ph), r*Math.cos(th)];
+}
+function drawAxes3D(ctx,cam,cx,cy,scale,len){
+  const O=project([0,0,0],cam,cx,cy,scale);
+  const ax=[['x',[len,0,0],P.mut2],['y',[0,len,0],P.mut2],['z',[0,0,len],P.muted]];
+  ctx.font='600 12px JetBrains Mono, monospace';
+  ax.forEach(([lab,v,col])=>{
+    const e=project(v,cam,cx,cy,scale);
+    ctx.strokeStyle=col;ctx.lineWidth=1.3;
+    ctx.beginPath();ctx.moveTo(O[0],O[1]);ctx.lineTo(e[0],e[1]);ctx.stroke();
+    ctx.fillStyle=col;ctx.fillText(lab,e[0]+4,e[1]+4);
+  });
+}
+function drawWireSphere(ctx,cam,cx,cy,scale,r){
+  ctx.strokeStyle=P.lineSoft;ctx.lineWidth=1;
+  // latitudes
+  for(let t=0.25;t<1;t+=0.25){
+    const th=t*Math.PI; ctx.beginPath();
+    for(let a=0;a<=360;a+=12){const p=project(sph2cart(r,th,rad(a)),cam,cx,cy,scale);a===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]);}
+    ctx.stroke();
+  }
+  // longitudes
+  for(let a=0;a<360;a+=45){
+    ctx.beginPath();
+    for(let t=0;t<=180;t+=10){const p=project(sph2cart(r,rad(t),rad(a)),cam,cx,cy,scale);t===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]);}
+    ctx.stroke();
+  }
+}
+
+/* ============================================================
+   TAB 2 — ESFÈRIQUES
+============================================================ */
+(function(){
+  const cv=document.getElementById('c2'); const s=setup(cv); const cam=makeCamera();
+  const sr=document.getElementById('sr2'),st=document.getElementById('st2'),sf=document.getElementById('sf2');
+  function draw(){
+    s.resize();const ctx=s.ctx;const cx=s.W()/2,cy=s.H()/2;const scale=Math.min(s.W(),s.H())*0.30;
+    ctx.clearRect(0,0,s.W(),s.H());
+    const r=+sr.value, th=rad(+st.value), ph=rad(+sf.value);
+    document.getElementById('lr2').textContent=fmt(r);
+    document.getElementById('lt2').textContent=st.value+'°';
+    document.getElementById('lf2').textContent=sf.value+'°';
+
+    drawWireSphere(ctx,cam,cx,cy,scale,1);
+    drawAxes3D(ctx,cam,cx,cy,scale,1.45);
+
+    const Pt=sph2cart(r,th,ph);
+    const O=project([0,0,0],cam,cx,cy,scale);
+    const S=project(Pt,cam,cx,cy,scale);
+    const foot=project([Pt[0],Pt[1],0],cam,cx,cy,scale); // projection on xy-plane
+
+    // azimut arc (xy plane, rose)
+    ctx.strokeStyle=P.rose;ctx.lineWidth=2.2;ctx.beginPath();
+    for(let a=0;a<=+sf.value;a+=4){const p=project([0.5*Math.cos(rad(a)),0.5*Math.sin(rad(a)),0],cam,cx,cy,scale);a===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]);}
+    ctx.stroke();
+    // line origin->foot and foot->point (dashed)
+    ctx.setLineDash([4,4]);ctx.strokeStyle=P.mut2;ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.moveTo(O[0],O[1]);ctx.lineTo(foot[0],foot[1]);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(foot[0],foot[1]);ctx.lineTo(S[0],S[1]);ctx.stroke();
+    ctx.setLineDash([]);
+
+    // polar angle arc (between z axis and point, cyan)
+    ctx.strokeStyle=P.cyan;ctx.lineWidth=2.4;ctx.beginPath();
+    for(let a=0;a<=+st.value;a+=4){const p=project(sph2cart(0.45,rad(a),ph),cam,cx,cy,scale);a===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]);}
+    ctx.stroke();
+
+    // radius (gold)
+    ctx.strokeStyle=P.gold;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(O[0],O[1]);ctx.lineTo(S[0],S[1]);ctx.stroke();
+    // point
+    ctx.fillStyle=P.gold;ctx.beginPath();ctx.arc(S[0],S[1],7,0,7);ctx.fill();
+    ctx.strokeStyle=P.ink;ctx.lineWidth=2;ctx.stroke();
+
+    ctx.font='600 12px JetBrains Mono, monospace';
+    ctx.fillStyle=P.cyan;ctx.fillText('θ',(O[0]+S[0])/2-14,(O[1]+S[1])/2);
+    ctx.fillStyle=P.rose;ctx.fillText('φ',O[0]+18,O[1]+16);
+    ctx.fillStyle=P.gold;ctx.fillText('r',(O[0]+S[0])/2+8,(O[1]+S[1])/2-6);
+  }
+  [sr,st,sf].forEach(el=>el.addEventListener('input',draw));
+  let drag=false,lx,ly;
+  function pos(e){const t=e.touches?e.touches[0]:e;return[t.clientX,t.clientY];}
+  cv.addEventListener('pointerdown',e=>{drag=true;[lx,ly]=pos(e);cv.setPointerCapture(e.pointerId);});
+  cv.addEventListener('pointermove',e=>{if(!drag)return;const[x,y]=pos(e);cam.yaw+=(x-lx)*0.01;cam.pitch=Math.max(-1.4,Math.min(1.4,cam.pitch+(y-ly)*0.01));lx=x;ly=y;draw();});
+  window.addEventListener('pointerup',()=>drag=false);
+  window.addEventListener('resize',draw);
+  cv._draw=draw; draw();
+})();
+
+/* ============================================================
+   TAB 3 — POTÈNCIA POLARS (De Moivre)
+============================================================ */
+(function(){
+  const cv=document.getElementById('c3'); const s=setup(cv);
+  const sn=document.getElementById('sn3');
+  let z={r:0.92, th:rad(34)};
+  let dragging=false;
+
+  function draw(){
+    s.resize();const ctx=s.ctx;const cx=s.W()/2,cy=s.H()/2;
+    ctx.clearRect(0,0,s.W(),s.H());
+    const n=+sn.value;
+    document.getElementById('ln3').textContent=fmt(n,1);
+
+    // gather points of spiral z^t , t in [0,n]
+    const pts=[];
+    for(let t=0;t<=n+1e-9;t+=0.04){const rr=Math.pow(z.r,t);pts.push([rr*Math.cos(t*z.th), rr*Math.sin(t*z.th)]);}
+    const znR=Math.pow(z.r,n), znTh=n*z.th;
+    // autofit
+    let m=1.05;pts.forEach(p=>{m=Math.max(m,Math.abs(p[0]),Math.abs(p[1]));});
+    m=Math.max(m, z.r);
+    const R=Math.min(s.W(),s.H())*0.42/m;
+    const W=(wx,wy)=>[cx+wx*R, cy-wy*R];
+
+    // grid rings at r = 0.5, 1, 1.5 ...
+    ctx.lineWidth=1;
+    for(let rr=0.5; rr<=m; rr+=0.5){ctx.beginPath();ctx.strokeStyle=Math.abs(rr-1)<1e-6?P.line:P.lineSoft;ctx.arc(cx,cy,rr*R,0,7);ctx.stroke();}
+    // axes
+    ctx.strokeStyle=P.line;ctx.lineWidth=1.3;
+    ctx.beginPath();ctx.moveTo(cx-s.W()/2,cy);ctx.lineTo(cx+s.W()/2,cy);ctx.moveTo(cx,cy-s.H()/2);ctx.lineTo(cx,cy+s.H()/2);ctx.stroke();
+
+    // spiral path
+    ctx.strokeStyle=P.cyan;ctx.lineWidth=2;ctx.globalAlpha=.55;ctx.beginPath();
+    pts.forEach((p,i)=>{const q=W(p[0],p[1]);i===0?ctx.moveTo(q[0],q[1]):ctx.lineTo(q[0],q[1]);});
+    ctx.stroke();ctx.globalAlpha=1;
+
+    // integer powers dots
+    for(let k=1;k<=Math.floor(n+1e-9);k++){
+      const rr=Math.pow(z.r,k);const q=W(rr*Math.cos(k*z.th),rr*Math.sin(k*z.th));
+      ctx.fillStyle=P.cyan;ctx.beginPath();ctx.arc(q[0],q[1],4,0,7);ctx.fill();
+      ctx.fillStyle=P.muted;ctx.font='600 11px JetBrains Mono, monospace';
+      ctx.fillText('z'+(k>1?supnum(k):''),q[0]+7,q[1]-5);
+    }
+
+    // z vector (gold)
+    const Z=W(z.r*Math.cos(z.th),z.r*Math.sin(z.th));
+    ctx.strokeStyle=P.gold;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(Z[0],Z[1]);ctx.stroke();
+    ctx.fillStyle=P.gold;ctx.beginPath();ctx.arc(Z[0],Z[1],7,0,7);ctx.fill();ctx.strokeStyle=P.ink;ctx.lineWidth=2;ctx.stroke();
+
+    // z^n point (rose, big)
+    const ZN=W(znR*Math.cos(znTh),znR*Math.sin(znTh));
+    ctx.strokeStyle=P.rose;ctx.lineWidth=2;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(ZN[0],ZN[1]);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=P.rose;ctx.beginPath();ctx.arc(ZN[0],ZN[1],6,0,7);ctx.fill();
+    ctx.fillStyle=P.rose;ctx.font='600 12px JetBrains Mono, monospace';ctx.fillText('zⁿ',ZN[0]+8,ZN[1]-7);
+
+    let thd=deg(z.th)%360; if(thd<0)thd+=360;
+    document.getElementById('z3').textContent='('+fmt(z.r)+', '+fmt(thd,0)+'°)';
+    let znd=deg(znTh)%360; if(znd<0)znd+=360;
+    document.getElementById('zn3').textContent='('+fmt(znR)+', '+fmt(znd,0)+'°)';
+  }
+  function supnum(k){return ({2:'²',3:'³',4:'⁴',5:'⁵',6:'⁶'})[k]||('^'+k);}
+
+  function pos(e){const r=cv.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return[t.clientX-r.left,t.clientY-r.top];}
+  cv.addEventListener('pointerdown',e=>{dragging=true;upd(e);cv.setPointerCapture(e.pointerId);});
+  cv.addEventListener('pointermove',e=>{if(dragging)upd(e);});
+  window.addEventListener('pointerup',()=>dragging=false);
+  function upd(e){const[mx,my]=pos(e);const cx=s.W()/2,cy=s.H()/2;
+    const wx=(mx-cx),wy=-(my-cy);
+    z.th=Math.atan2(wy,wx);
+    // map drag distance to r in [0.3,1.25] for nice behaviour
+    const R0=Math.min(s.W(),s.H())*0.42;
+    let rr=Math.hypot(wx,wy)/R0; z.r=Math.max(0.3,Math.min(1.25,rr));
+    draw();
+  }
+  sn.addEventListener('input',draw);
+  window.addEventListener('resize',draw);
+  cv._draw=draw; draw();
+})();
+
+/* ============================================================
+   TAB 4 — POTÈNCIA ESFÈRIQUES (Mandelbulb)
+============================================================ */
+(function(){
+  const cv=document.getElementById('c4'); const s=setup(cv); const cam=makeCamera();
+  const sr=document.getElementById('sr4'),st=document.getElementById('st4'),sf=document.getElementById('sf4'),sn=document.getElementById('sn4');
+  function draw(){
+    s.resize();const ctx=s.ctx;const cx=s.W()/2,cy=s.H()/2;
+    ctx.clearRect(0,0,s.W(),s.H());
+    const r=+sr.value, th=rad(+st.value), ph=rad(+sf.value), n=+sn.value;
+    document.getElementById('lr4').textContent=fmt(r);
+    document.getElementById('lt4').textContent=st.value+'°';
+    document.getElementById('lf4').textContent=sf.value+'°';
+    document.getElementById('ln4').textContent=fmt(n,1);
+
+    // orbit z^t for t in [0,n]
+    const orbit=[];let maxr=1;
+    for(let t=0;t<=n+1e-9;t+=0.05){const rr=Math.pow(r,t);maxr=Math.max(maxr,rr);orbit.push(sph2cart(rr,t*th,t*ph));}
+    const znP=sph2cart(Math.pow(r,n),n*th,n*ph);
+    const scale=Math.min(s.W(),s.H())*0.34/Math.max(1,maxr*0.9);
+
+    drawWireSphere(ctx,cam,cx,cy,scale,1);
+    drawAxes3D(ctx,cam,cx,cy,scale,1.4);
+
+    const O=project([0,0,0],cam,cx,cy,scale);
+    // orbit path
+    ctx.strokeStyle=P.cyan;ctx.lineWidth=2;ctx.globalAlpha=.6;ctx.beginPath();
+    orbit.forEach((p,i)=>{const q=project(p,cam,cx,cy,scale);i===0?ctx.moveTo(q[0],q[1]):ctx.lineTo(q[0],q[1]);});
+    ctx.stroke();ctx.globalAlpha=1;
+    // integer powers
+    for(let k=1;k<=Math.floor(n+1e-9);k++){
+      const q=project(sph2cart(Math.pow(r,k),k*th,k*ph),cam,cx,cy,scale);
+      ctx.fillStyle=P.cyan;ctx.beginPath();ctx.arc(q[0],q[1],3.6,0,7);ctx.fill();
+    }
+    // original point (gold)
+    const Z=project(sph2cart(r,th,ph),cam,cx,cy,scale);
+    ctx.strokeStyle=P.gold;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(O[0],O[1]);ctx.lineTo(Z[0],Z[1]);ctx.stroke();
+    ctx.fillStyle=P.gold;ctx.beginPath();ctx.arc(Z[0],Z[1],6.5,0,7);ctx.fill();ctx.strokeStyle=P.ink;ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle=P.gold;ctx.font='600 12px JetBrains Mono, monospace';ctx.fillText('z',Z[0]+8,Z[1]-6);
+    // z^n (rose)
+    const ZN=project(znP,cam,cx,cy,scale);
+    ctx.strokeStyle=P.rose;ctx.lineWidth=2;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(O[0],O[1]);ctx.lineTo(ZN[0],ZN[1]);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=P.rose;ctx.beginPath();ctx.arc(ZN[0],ZN[1],6,0,7);ctx.fill();
+    ctx.fillStyle=P.rose;ctx.fillText('zⁿ',ZN[0]+8,ZN[1]-6);
+  }
+  [sr,st,sf,sn].forEach(el=>el.addEventListener('input',draw));
+  let drag=false,lx,ly;
+  function pos(e){const t=e.touches?e.touches[0]:e;return[t.clientX,t.clientY];}
+  cv.addEventListener('pointerdown',e=>{drag=true;[lx,ly]=pos(e);cv.setPointerCapture(e.pointerId);});
+  cv.addEventListener('pointermove',e=>{if(!drag)return;const[x,y]=pos(e);cam.yaw+=(x-lx)*0.01;cam.pitch=Math.max(-1.4,Math.min(1.4,cam.pitch+(y-ly)*0.01));lx=x;ly=y;draw();});
+  window.addEventListener('pointerup',()=>drag=false);
+  window.addEventListener('resize',draw);
+  cv._draw=draw; draw();
+})();
+
+/* ---------- tabs ---------- */
+const tabs=[...document.querySelectorAll('.tab')];
+tabs.forEach(t=>t.addEventListener('click',()=>{
+  tabs.forEach(x=>x.setAttribute('aria-selected','false'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  t.setAttribute('aria-selected','true');
+  const panel=document.getElementById(t.dataset.tab);
+  panel.classList.add('active');
+  const cv=panel.querySelector('canvas'); if(cv&&cv._draw) requestAnimationFrame(cv._draw);
+}));
+</script>
+</body>
+</html>

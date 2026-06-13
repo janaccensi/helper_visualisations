@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visualitzacions interactives</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Spectral:ital,wght@1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080b10;--ink-2:#0c1118;--panel:#111824;--line:#1c2735;--line-soft:#161f2b;
+    --gold:#f4b942;--green:#5ef2c0;--cyan:#52d1ff;--rose:#ff6b9d;
+    --text:#e7eef7;--muted:#8ea2bb;--muted-2:#62748d;
+    --mono:'JetBrains Mono',ui-monospace,monospace;--ui:'Space Grotesk',system-ui,sans-serif;--disp:'Spectral',Georgia,serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:var(--ui);color:var(--text);min-height:100%;
+    background:
+      radial-gradient(900px 600px at 85% -10%, #123a3214, transparent 60%),
+      radial-gradient(700px 500px at -5% 110%, #2a1c3314, transparent 55%),
+      var(--ink);
+    -webkit-font-smoothing:antialiased;display:flex;justify-content:center;padding:32px 18px;}
+  .wrap{width:100%;max-width:880px}
+  .eyebrow{font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--muted-2);font-weight:600;}
+  h1{font-family:var(--disp);font-style:italic;font-weight:500;font-size:clamp(26px,5vw,40px);line-height:1.08;margin:6px 0 10px;}
+  h1 .g{color:var(--green)} h1 .y{color:var(--gold)}
+  .sub{color:var(--muted);font-size:14.5px;line-height:1.6;max-width:60ch}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:30px}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}}
+  .card{display:block;text-decoration:none;color:inherit;border:1px solid var(--line-soft);
+    border-radius:14px;background:linear-gradient(180deg,var(--ink-2),#0a0f16);padding:20px;position:relative;
+    overflow:hidden;transition:.18s;}
+  .card:hover{border-color:var(--line);transform:translateY(-2px);box-shadow:0 20px 50px -28px #000c}
+  .card .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--muted-2);
+    border:1px solid var(--line);border-radius:6px;padding:2px 7px;display:inline-block}
+  .card h2{font-size:19px;font-weight:600;margin:14px 0 8px;letter-spacing:-.01em}
+  .card.one h2{color:var(--gold)} .card.two h2{color:var(--green)}
+  .card p{font-size:13px;line-height:1.55;color:var(--muted)}
+  .card .go{margin-top:16px;font-family:var(--mono);font-size:12px;color:var(--text);display:flex;align-items:center;gap:6px}
+  .card .stripe{position:absolute;left:0;top:0;bottom:0;width:3px}
+  .card.one .stripe{background:linear-gradient(180deg,var(--gold),var(--cyan))}
+  .card.two .stripe{background:linear-gradient(180deg,var(--green),var(--rose))}
+  footer{margin-top:34px;font-family:var(--mono);font-size:11.5px;color:var(--muted-2);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Material de suport · matemàtiques i gràfics</div>
+  <h1>Visualitzacions <span class="g">interactives</span></h1>
+  <p class="sub">Demostracions per a explicar conceptes amb la mà a sobre: arrossega, mou els controls i mira com responen. Pensades per a classe i presentacions.</p>
+
+  <div class="grid">
+    <a class="card one" href="coordenades-interactiu.html">
+      <span class="stripe"></span>
+      <span class="tag">01 · geometria</span>
+      <h2>Coordenades polars i esfèriques</h2>
+      <p>De (r, θ) a (r, θ, φ), i què vol dir elevar a la potència n: De Moivre en 2D i la seva extensió 3D (la idea del Mandelbulb).</p>
+      <span class="go">Obre →</span>
+    </a>
+    <a class="card two" href="raymarching-interactiu.html">
+      <span class="stripe"></span>
+      <span class="tag">02 · gràfics</span>
+      <h2>Ray marching i SDF</h2>
+      <p>Camp de distàncies amb dos objectes, el pas segur (sphere tracing) i com s'arriba a l'impacte amb el llindar ε i la normal.</p>
+      <span class="go">Obre →</span>
+    </a>
+  </div>
+
+  <footer>helper_visualisations · GitHub Pages</footer>
+</div>
+</body>
+</html>
